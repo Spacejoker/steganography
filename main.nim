@@ -9,15 +9,16 @@ proc encode*(data: string): string =
   return seq.join("")
 
 proc channelBits(color: uint8): int = 
-  var c = color
-  var highestBit = 0
-  while c > 0:
-    c = c div 2'u8
-    highestBit += 1
-  var useBits = highestBit - 3
-  if useBits > 0:
-    return useBits
-  return 0
+  return 4
+#   var c = color
+#   var highestBit = 0
+#   while c > 0:
+#     c = c div 2'u8
+#     highestBit += 1
+#   var useBits = highestBit - 3
+#   if useBits > 0:
+#     return useBits
+#   return 0
 
 proc countBits(img: Image, bits: seq[bool]): int =
   var ret = 0
