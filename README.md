@@ -5,10 +5,14 @@ This project encodes a **text file into the least significant bits of a PNG imag
 ---
 
 ## 🖼️ Example
+Hidden data is first ~50 pages of the metamorphois by Kafka.
 
-- Input image: [`test.png`](test.png)
-- Output image with embedded message: [`output.png`](output.png)
-- Hidden text file: [`kafka.txt`](kafka.txt)
+### Input: `test.png`
+<img src="test.png" width="300" alt="Input image">
+
+### Output: `output.png` (with hidden text)
+<img src="output.png" width="300" alt="Output image with encoded message">
+
 
 --
 
