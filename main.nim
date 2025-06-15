@@ -97,38 +97,44 @@ proc toStringMessage(bits: seq[bool]): string =
       return
     result.add(char(b))
 
-proc main(): void =
-  var image = readImage("test.png")
-  let contents = readFile("kafka.txt")
+
+let depthBitFootprint = 2
+
+proc encodeToFile(filePath: string, contents: string) = 
+  var image = readImage(filePath)
   let zipContents = compress(contents)
   let contentLen = zipContents.len
-  echo contentLen * 8
-  let numPixels = image.width * image.height * 8 - 64
-
-  let totalChannels = numPixels * 3
-  let channelBits = 2 # ((contentLen + 64) div totalChannels) + 1
+  let numChannels = image.width * image.height * 3
+  let channelBits = ((contentLen * 8 + 64 + 4) div numChannels) + 1
+  echo "Storing using bit depth " & $channelBits
 
   # Num bits in input
   let sizeBitSeq = intToBits(contentLen * 8, 64)
-  echo sizeBitSeq
-  discard writeToImage(image, sizeBitSeq, 0, 64, channelBits)
+
+  discard writeToImage(image, intToBits(channelBits, 4), 0, 4, depthBitFootprint)
+  discard writeToImage(image, sizeBitSeq, 4, 64, channelBits)
   let contentBits = stringToBits(zipContents)
-  discard writeToImage(image, contentBits, 64, contentBits.len, channelBits)
+  discard writeToImage(image, contentBits, 68, contentBits.len, channelBits)
   image.writeFile("output.png")
 
-  var encodedImg = readImage("output.png")
-  var bitMessage = decodeImage(encodedImg, 0, 64, channelBits)
+proc decodeImage(filePath: string): string =
+  var encodedImg = readImage(filePath)
+  var channelBits = bitsToInt(decodeImage(encodedImg, 0, 4, depthBitFootprint))
+
+  echo "Decoding using bit depth " & $channelBits
+  var bitMessage = decodeImage(encodedImg, 4, 64, channelBits)
+
   var sz = bitsToInt(bitMessage)
-  var zipRet = decodeImage(encodedImg, 64, sz, channelBits)
+  var zipRet = decodeImage(encodedImg, 68, sz, channelBits)
   var bytes = bitsToBytes(zipRet)
   var ret = uncompress(bytes)
-  let s = cast[string](ret)
-  echo s
-  echo "using depth " & $channelBits
+  return cast[string](ret)
 
-  # var stringMessage = toStringMessage(bitMessage)
-  echo sz
-  # echo "Number bits total:" & $totalbits
+
+proc main(): void =
+  let contents = readFile("kafka.txt")
+  encodeToFile("output.png", contents)
+  discard decodeImage("output.png")
 
 main()
 

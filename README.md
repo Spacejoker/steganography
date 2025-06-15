@@ -1,42 +1,38 @@
-# Nim Steganography: PNG Bit Encoder
+# Dynamic least significant b it PNG steganography encoder / decoder
 
-This project encodes a **text file into the least significant bits of a PNG image**, using Nim. It modifies the **RGB channels** of each pixel to hide compressed data, and later decodes it with full recovery.
+Util lib to store your favorite texts inside your favorite images.
 
----
+Example:
 
-## 🖼️ Example
-Hidden data is first ~50 pages of the metamorphois by Kafka.
+Using one of the best title screens of all time (256x240 resolution), I took
+one of my favorite public domain books (The Metamorphosis by F. Kafka) and stored it in the color channels:
 
-### Input: `test.png`
-<img src="test.png" width="300" alt="Input image">
 
 ### Output: `output.png` (with hidden text)
 <img src="output.png" width="300" alt="Output image with encoded message">
 
+Original image:
+### Input: `test.png`
+<img src="test.png" width="300" alt="Input image">
 
---
+Encoded message is the entire [The Metamorphosis](https://en.wikipedia.org/wiki/The_Metamorphosis) content, a total of ~1M bits.
 
-## ✨ Features
+The png has three parts that has to be read in order:
 
-- 🔐 Bit-level steganography (LSB encoding) across R, G, B channels
-- 🖼️ Pure image-based storage — no external metadata
+1. First 4 bits: the number of bits to use in each color channel. This is stored using only 1 bit of each color.
+2. Next 64 bits stores an `uint` with the total size of the content (which is zipped).
+3. The next `n` bits (from the previous step) is the zipped content.
 
----
+This ensures the minimum amount of bits used per color channel.
 
-## 🚀 How It Works
+## Improvement ideas
 
-1. **Read message** from `kafka.txt`
-1. **Embed** bitstream into `test.png` using pixel RGB least significant bits
-1. Save as `output.png`
+1. Heterogenous usage of bit depth across the image (darker and high variance areas are less sensitive).
+2. Use the entire image, (`bit plane` approach rather than per pixel with fixed depth).
 
-To decode:
-1. Load `output.png`
-2. Extract least significant bits from RGB
-3. Convert bits -> binary -> string
+## To run
 
----
-
-## 🧪 Run
+The semantically great names `test.png` and `kafka.txt` are used for image and message source.
 
 ```sh
 nim -r main.nim
