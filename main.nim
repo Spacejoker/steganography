@@ -14,10 +14,8 @@ proc encode*(data: string): string =
   return seq.join("")
 
 
-let channelBits = 4
-
 # Target offset needs divide 12 (pixel * channels * bit)
-proc writeToImage(img: Image, bits: seq[bool], targetOffset: int, numBits: int): int =
+proc writeToImage(img: Image, bits: seq[bool], targetOffset: int, numBits: int, channelBits: int): int =
   var ret = 0
   var srcOffset = 0
   var skippedBits = 0
@@ -28,7 +26,7 @@ proc writeToImage(img: Image, bits: seq[bool], targetOffset: int, numBits: int):
       var px = img.data[idx]
 
       for channel in [addr px.r, addr px.g, addr px.b]:
-        let cb = 4
+        let cb = channelBits
         for i in 0..<cb:
           if skippedBits < targetOffset:
             inc skippedBits
@@ -59,7 +57,7 @@ proc bitsToInt(bits: seq[bool]): int =
     if b:
       result = result or (1 shl (bits.len - 1 - i))
 
-proc decodeImage(img: Image, startOffset: int, numBits: int): seq[bool] =
+proc decodeImage(img: Image, startOffset: int, numBits: int, channelBits: int): seq[bool] =
   var bitIdx = 0
   for y in 0..<img.height:
     for x in 0..<img.width:
@@ -104,23 +102,29 @@ proc main(): void =
   let contents = readFile("kafka.txt")
   let zipContents = compress(contents)
   let contentLen = zipContents.len
+  echo contentLen * 8
+  let numPixels = image.width * image.height * 8 - 64
+
+  let totalChannels = numPixels * 3
+  let channelBits = 2 # ((contentLen + 64) div totalChannels) + 1
 
   # Num bits in input
   let sizeBitSeq = intToBits(contentLen * 8, 64)
   echo sizeBitSeq
-  discard writeToImage(image, sizeBitSeq, 0, 64)
+  discard writeToImage(image, sizeBitSeq, 0, 64, channelBits)
   let contentBits = stringToBits(zipContents)
-  discard writeToImage(image, contentBits, 64, contentBits.len)
+  discard writeToImage(image, contentBits, 64, contentBits.len, channelBits)
   image.writeFile("output.png")
 
   var encodedImg = readImage("output.png")
-  var bitMessage = decodeImage(encodedImg, 0, 64)
+  var bitMessage = decodeImage(encodedImg, 0, 64, channelBits)
   var sz = bitsToInt(bitMessage)
-  var zipRet = decodeImage(encodedImg, 64, sz)
+  var zipRet = decodeImage(encodedImg, 64, sz, channelBits)
   var bytes = bitsToBytes(zipRet)
   var ret = uncompress(bytes)
   let s = cast[string](ret)
   echo s
+  echo "using depth " & $channelBits
 
   # var stringMessage = toStringMessage(bitMessage)
   echo sz
