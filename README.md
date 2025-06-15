@@ -1,12 +1,10 @@
-# Dynamic least significant b it PNG steganography encoder / decoder
+# Dynamic least significant bit PNG steganography encoder / decoder
 
 Util lib to store your favorite texts inside your favorite images.
 
 Example:
 
-Using one of the best title screens of all time (256x240 resolution), I took
-one of my favorite public domain books (The Metamorphosis by F. Kafka) and stored it in the color channels:
-
+Using one of the most iconic title screens ever made (256×240 resolution), this project conceals a public domain classic — The Metamorphosis by Franz Kafka — within its pixels.
 
 ### Output: `output.png` (with hidden text)
 <img src="output.png" width="300" alt="Output image with encoded message">
